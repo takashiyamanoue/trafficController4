@@ -114,7 +114,8 @@ public class ParsePacket {
 		if(payload==null) return "no-payload";
 		try {
 		   MessageDigest digest = MessageDigest.getInstance("SHA-1");
-		   byte[] sha1=digest.digest(payload.getRawData());
+		   byte[] payraw=payload.getRawData();
+		   byte[] sha1=digest.digest(payraw);
 		   this.sha1Payload=SBUtil.byteArray2hex2(sha1);
 		   return sha1Payload;
 		}

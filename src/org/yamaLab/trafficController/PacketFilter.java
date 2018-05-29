@@ -332,24 +332,62 @@ private ParsePacket exec(Packet p,Map<MacAddressKey, MacAddrTableElement> mt) {
 		  DnsInformation dnsI=new DnsInformation(pp);
 		  if(dnsI.dns) {
 			  if(dnsI.isAnswer()) {
+				  if(dnsI.getErrorCode()==0) {
 //  	        byte[] dnsr=getDnsAnswerAddr(pp);
-			    byte[] dnsr=dnsI.getARecordAddressByte();
-			    if(dnsr!=null) {
-			       String key=dnsI.getARecordName();
+			         byte[] dnsr=dnsI.getARecordAddressByte();
+			         if(dnsr!=null) {
+			            String key=dnsI.getARecordName();
+			            String ip1="\""+dnsI.getARecordAddress()+"\"";
+			            String ip2="\""+dnsI.dnsServerIPs+"\"";
+			            String tx=pp.getTimeS();			       
+			            this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
+//          if(isInNat(pp.ip.destination(), pp.dport, dnsr, 0 )){
+  	                    if(isInNat(pp.ipv4.getHeader().getDstAddr().getAddress(),
+  	    		             pp.dport,
+  	    		             dnsr,0)) {
+  	        	           String dnsAs=dnsI.getARecordAddress();
+      	                   this.writeResultToBuffer("substitute-destination to "+dnsAs,pp);
+  	                       return setDnsReturn(pp,dnsr);
+  	                    }
+			        }
+			        else {
+				       String key=dnsI.getARecordName();
+				       String ip1="\"*\"";
+				       String ip2="\""+dnsI.dnsServerIPs+"\"";
+				       String tx=pp.getTimeS();			       			    	
+				       this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");			    	
+			        }
+				  }
+				  else { // error.
+					  int errorCode=dnsI.getErrorCode();
+					  String errorX="";
+					  if(errorCode==0x0003) {errorX="no_such_name";}
+					  if(errorCode==0x0000) {errorX="no_error";}
+					  if(errorCode==0x0001) {errorX="server_failure";}
+					  if(errorCode==0x0002) {errorX="name_error";}
+			            String key=dnsI.query.name+"---"+errorX;
+			            String ip1="\"*\"";
+			            String ip2="\""+dnsI.dnsServerIPs+"\"";
+			            String tx=pp.getTimeS();			       
+			            this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
+					  
+					  
+				  }
+			  }
+			  /*
+			  else {
+				    byte[] dnsr=dnsI.getARecordAddressByte();
+				    String key="*";
+				    if(dnsr!=null) {				  
+			           key=dnsI.getARecordName();
+				    }
 			       String ip1="\""+dnsI.getARecordAddress()+"\"";
 			       String ip2="\""+dnsI.dnsServerIPs+"\"";
 			       String tx=pp.getTimeS();			       
-			       this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
-//          if(isInNat(pp.ip.destination(), pp.dport, dnsr, 0 )){
-  	               if(isInNat(pp.ipv4.getHeader().getDstAddr().getAddress(),
-  	    		        pp.dport,
-  	    		        dnsr,0)) {
-  	        	      String dnsAs=dnsI.getARecordAddress();
-      	              this.writeResultToBuffer("substitute-destination to "+dnsAs,pp);
-  	                  return setDnsReturn(pp,dnsr);
-  	               }
-			    }
+			       this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");				  
+			      System.out.println("is not dns answer...."+key);
 			  }
+			  */
 		  }
 		  }
 		  catch(Exception e) {
@@ -1035,6 +1073,19 @@ boolean isInChars(char x, char[] y){
 			int initialP=start;
 			try {
 			   name=di.parseName(r, start, np);
+			   if(name.contains(".org")) {
+				   System.out.println("parseDnsResourceRecord-.org:name "+name);
+			   }
+			   if(name.contains(".biz")) {
+				   System.out.println("parseDnsResourceRecord-.biz:name "+name);
+			   }
+			   if(name.contains(".ru")) {
+				   System.out.println("parseDnsResourceRecord-.ru:name "+name);
+			   }
+			   if(name.contains(".info")) {
+				   System.out.println("parseDnsResourceRecord-.info:name "+name);
+			   }
+			   
 			}
 			catch(Exception e) {
 				System.out.println("DnsAnswer.parseDnsResourceRecord-parseName error:"+e);
@@ -1114,6 +1165,19 @@ boolean isInChars(char x, char[] y){
 			int[] np=new int[1];
 			int initialP=start;
 			name=di.parseName(r, start, np);
+			   if(name.contains(".org")) {
+				   System.out.println("parseDnsResourceRecord-.org:name "+name);
+			   }
+			   if(name.contains(".biz")) {
+				   System.out.println("parseDnsResourceRecord-.biz:name "+name);
+			   }
+			   if(name.contains(".ru")) {
+				   System.out.println("parseDnsResourceRecord-.ru:name "+name);
+			   }
+			   if(name.contains(".info")) {
+				   System.out.println("parseDnsResourceRecord-.info:name "+name);
+			   }
+			
             start=np[0];
 			this.dnsType=(0xff & r[start])<<8|(0xff & r[start+1]);
 			this.dnsClass=(0xff & r[start+2])<<8|(0xff & r[start+3]);
@@ -1153,7 +1217,7 @@ boolean isInChars(char x, char[] y){
 		int ancount;
 		int nscount;
 		int arcount;
-		DnsQuery query;
+		public DnsQuery query;
 		DnsAnswer[] an;
 		DnsAnswer[] ns;
 		DnsAnswer[] ar;
@@ -1203,6 +1267,19 @@ boolean isInChars(char x, char[] y){
 						name= xname;
 					else
 					    name= name+"."+xname;
+					   if(name.contains(".org")) {
+						   System.out.println("parseDnsResourceRecord-.org:name "+name);
+					   }
+					   if(name.contains(".biz")) {
+						   System.out.println("parseDnsResourceRecord-.biz:name "+name);
+					   }
+					   if(name.contains(".ru")) {
+						   System.out.println("parseDnsResourceRecord-.ru:name "+name);
+					   }
+					   if(name.contains(".info")) {
+						   System.out.println("parseDnsResourceRecord-.info:name "+name);
+					   }
+					
 					return name;
 				}
 				if(name.equals(""))
@@ -1221,6 +1298,10 @@ boolean isInChars(char x, char[] y){
 		
 		public boolean isAnswer() {
 			boolean rtn=(0x8000 & property)!=0;
+			return rtn;
+		}
+		public int getErrorCode() {
+			int rtn=(0x000f & property);
 			return rtn;
 		}
 		

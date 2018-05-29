@@ -77,6 +77,7 @@ public class Basic extends ABasic implements InterpreterInterface
         	catch(Exception e){
         		gui.parseCommand("error at applyMiscOperation.ex, println "+e.toString());
         		plist("error applyMiscOperation.ex proc=",proc);
+        		plist(" argl=",argl);
         		System.out.println("appliname="+appliname+",command="+command);
         		Thread.dumpStack();        		
         		return nilSymbol;      	            	
