@@ -339,8 +339,10 @@ private ParsePacket exec(Packet p,Map<MacAddressKey, MacAddrTableElement> mt) {
 			            String key=dnsI.getARecordName();
 			            String ip1="\""+dnsI.getARecordAddress()+"\"";
 			            String ip2="\""+dnsI.dnsServerIPs+"\"";
-			            String tx=pp.getTimeS();			       
-			            this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
+			            String tx=pp.getTimeS();
+			            TimeAndString ts=new TimeAndString(pp.ptime,ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
+			            this.domainNameList.put(key, ts);
+//			            this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
 //          if(isInNat(pp.ip.destination(), pp.dport, dnsr, 0 )){
   	                    if(isInNat(pp.ipv4.getHeader().getDstAddr().getAddress(),
   	    		             pp.dport,
@@ -354,8 +356,10 @@ private ParsePacket exec(Packet p,Map<MacAddressKey, MacAddrTableElement> mt) {
 				       String key=dnsI.getARecordName();
 				       String ip1="\"*\"";
 				       String ip2="\""+dnsI.dnsServerIPs+"\"";
-				       String tx=pp.getTimeS();			       			    	
-				       this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");			    	
+				       String tx=pp.getTimeS();
+//				       this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");			    	
+			            TimeAndString ts=new TimeAndString(pp.ptime,ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
+			            this.domainNameList.put(key, ts);
 			        }
 				  }
 				  else { // error.
@@ -369,8 +373,9 @@ private ParsePacket exec(Packet p,Map<MacAddressKey, MacAddrTableElement> mt) {
 			            String ip1="\"*\"";
 			            String ip2="\""+dnsI.dnsServerIPs+"\"";
 			            String tx=pp.getTimeS();			       
-			            this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
-					  
+//			            this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
+			            TimeAndString ts=new TimeAndString(pp.ptime,ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
+			            this.domainNameList.put(key, ts);
 					  
 				  }
 			  }
@@ -451,7 +456,9 @@ private ParsePacket exec(Packet p,Map<MacAddressKey, MacAddrTableElement> mt) {
 			       String ip1=dnsI.getARecordAddress();
 			       String ip2=dnsI.dnsServerIPs;
 			       String tx=pp.getTimeS();
-			       this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
+//			       this.domainNameList.put(key, ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
+		            TimeAndString ts=new TimeAndString(pp.ptime,ip1+" "+ip2+" "+pp.getDestinationIpString()+" \""+tx+"\"");
+		            this.domainNameList.put(key, ts);
 //          if(isInNat(pp.ip.destination(), pp.dport, dnsr, 0 )){
   	               if(isInNat(pp.ipv6.getHeader().getDstAddr().getAddress(),
   	    		        pp.dport,
@@ -1054,7 +1061,20 @@ boolean isInChars(char x, char[] y){
 		return false;
 	}
 	*/
-   public Map<String,String> domainNameList =new HashMap();
+   public Map<String,TimeAndString> domainNameList =new HashMap();
+   public void deleteOldDomainList(long x) {
+	   long timeNow=System.currentTimeMillis();
+       for(String key: domainNameList.keySet()) {
+     	   if(key!=null) {
+     		   TimeAndString ts=domainNameList.get(key);
+     		   long tx=ts.time;
+               if(timeNow>tx+x) {
+            	   domainNameList.remove(key);
+               }
+     	   }
+        }
+	   
+   }
 	class DnsAnswer{
 		public String name;
 		public int dnsType;
@@ -1073,6 +1093,7 @@ boolean isInChars(char x, char[] y){
 			int initialP=start;
 			try {
 			   name=di.parseName(r, start, np);
+			   /*
 			   if(name.contains(".org")) {
 				   System.out.println("parseDnsResourceRecord-.org:name "+name);
 			   }
@@ -1085,6 +1106,7 @@ boolean isInChars(char x, char[] y){
 			   if(name.contains(".info")) {
 				   System.out.println("parseDnsResourceRecord-.info:name "+name);
 			   }
+			   */
 			   
 			}
 			catch(Exception e) {
@@ -1165,6 +1187,7 @@ boolean isInChars(char x, char[] y){
 			int[] np=new int[1];
 			int initialP=start;
 			name=di.parseName(r, start, np);
+			/*
 			   if(name.contains(".org")) {
 				   System.out.println("parseDnsResourceRecord-.org:name "+name);
 			   }
@@ -1177,7 +1200,7 @@ boolean isInChars(char x, char[] y){
 			   if(name.contains(".info")) {
 				   System.out.println("parseDnsResourceRecord-.info:name "+name);
 			   }
-			
+			*/
             start=np[0];
 			this.dnsType=(0xff & r[start])<<8|(0xff & r[start+1]);
 			this.dnsClass=(0xff & r[start+2])<<8|(0xff & r[start+3]);
@@ -1267,6 +1290,7 @@ boolean isInChars(char x, char[] y){
 						name= xname;
 					else
 					    name= name+"."+xname;
+					/*
 					   if(name.contains(".org")) {
 						   System.out.println("parseDnsResourceRecord-.org:name "+name);
 					   }
@@ -1279,7 +1303,7 @@ boolean isInChars(char x, char[] y){
 					   if(name.contains(".info")) {
 						   System.out.println("parseDnsResourceRecord-.info:name "+name);
 					   }
-					
+					*/
 					return name;
 				}
 				if(name.equals(""))
@@ -1793,7 +1817,13 @@ boolean isInChars(char x, char[] y){
 	}
 	
 	public TrafficHistory dhcpHistory =new TrafficHistory();
+	public void deleteOldDhcpList(long x) {
+		
+	}
 	public TrafficHistory arpHistory = new TrafficHistory();
+	public void deleteOldArpList(long x) {
+		
+	}
 	interface dhcpOptionInterface {
 		public boolean parse();
 		public String toString();

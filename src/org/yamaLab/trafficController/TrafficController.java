@@ -1235,12 +1235,62 @@ CommandReceiver, Runnable, InterpreterInterface, ParsePacketReceiver
 	
 		return null;
 	}
+	
+	private long domainListUpdateTerm=1800000;
+	private long previousDomainListUpdateTime=0;
+	private long dhcpListUpdateTerm=1800000;
+	private long previousDhcpListUpdateTime=0;
+	private long arpListUpdateTerm=1800000;
+	private long previousArpListUpdateTime=0;
+	private long macAddressTableUpdateTerm=300000;
+	private long previousMacAddressTableUpdateTime=0;
+	private void updateDomainList() {
+		if(wan2Lan!=null) {
+			wan2Lan.deleteOldDomainList(domainListUpdateTerm*2);
+		}
+		if(lan2Wan!=null) {
+			lan2Wan.deleteOldDomainList(domainListUpdateTerm*2);
+		}
+	}
+	private void updateDhcpList() {
+		if(wan2Lan!=null) {
+			wan2Lan.deleteOldDhcpList(dhcpListUpdateTerm*2);
+		}
+		if(lan2Wan!=null) {
+			lan2Wan.deleteOldDhcpList(dhcpListUpdateTerm*2);
+		}		
+	}
+	private void updateArpList() {
+		if(wan2Lan!=null) {
+			wan2Lan.deleteOldArpList(arpListUpdateTerm*2);
+		}
+		if(lan2Wan!=null) {
+			lan2Wan.deleteOldArpList(arpListUpdateTerm*2);
+		}		
+	}
 	public void run() {
 		// TODO Auto-generated method stub
 		while(me!=null) {
-			updateMacAddrTable();
+			long timeNow=System.currentTimeMillis();
+			if(timeNow>(previousMacAddressTableUpdateTime+macAddressTableUpdateTerm)) {
+			   updateMacAddrTable();
+			   previousMacAddressTableUpdateTime=timeNow;
+			}
+			if(timeNow>(previousDomainListUpdateTime+domainListUpdateTerm)) {
+				   updateDomainList();
+				   previousDomainListUpdateTime=timeNow;
+			}
+			if(timeNow>(previousDhcpListUpdateTime+dhcpListUpdateTerm)) {
+				   updateDhcpList();
+				   previousDhcpListUpdateTime=timeNow;
+			}
+			if(timeNow>(previousArpListUpdateTime+arpListUpdateTerm)) {
+				   updateArpList();
+				   previousArpListUpdateTime=timeNow;
+			}
+			
 			try {
-			me.sleep((long)300000);
+			me.sleep((long)30000);
 			}
 			catch(InterruptedException e) {
 				System.out.println("interrupted exception at mainFrame.run");
@@ -1681,11 +1731,12 @@ CommandReceiver, Runnable, InterpreterInterface, ParsePacketReceiver
 			System.out.println("Error ... no wan2Lan.domainNameList");
 			return new StringBuffer("ERROR");
 		}
-        Map<String,String> domainList=this.wan2Lan.domainNameList;
+        Map<String,TimeAndString> domainList=this.wan2Lan.domainNameList;
         if(domainList==null) return null;
         for(String key: domainList.keySet()) {
      	   if(key!=null) {
-     		   String aipserver=domainList.get(key);
+     		   TimeAndString ts=domainList.get(key);
+     		   String aipserver=ts.s;
      		   StringTokenizer st=new StringTokenizer(aipserver);
      		   String aip=st.nextToken();
      		   String server=st.nextToken();
@@ -1701,7 +1752,8 @@ CommandReceiver, Runnable, InterpreterInterface, ParsePacketReceiver
         if(domainList==null) return rtn;
         for(String key: domainList.keySet()) {
      	   if(key!=null) {
-     		   String aipserver=domainList.get(key);
+     		   TimeAndString ts=domainList.get(key);
+     		   String aipserver=ts.s;
      		   StringTokenizer st=new StringTokenizer(aipserver);
      		   String aip=st.nextToken();
      		   String server=st.nextToken();
