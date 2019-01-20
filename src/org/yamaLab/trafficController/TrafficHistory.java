@@ -19,7 +19,7 @@ public class TrafficHistory {
     		xlog=new Vector();
     	}
     	else {
-    		if(xlog.size()>10) {
+    		if(xlog.size()>=32) {
     			xlog.remove(0);
     		}
     	}
